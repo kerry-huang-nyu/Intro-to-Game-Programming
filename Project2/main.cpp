@@ -323,8 +323,10 @@ void sprite_init() {
     lpaddle_model_matrix = glm::scale(lpaddle_model_matrix, paddle_scale);
     rpaddle_model_matrix = glm::scale(rpaddle_model_matrix, paddle_scale);
 
-    lpaddle_model_matrix[3][0] = -5 + padwidth/2; // this is how to update the x position of the paddels at the start
-    rpaddle_model_matrix[3][0] = 5 - padwidth/2;
+    lpaddle_model_matrix = glm::translate(lpaddle_model_matrix, glm::vec3(-5 + padwidth / 2, 0, 0));
+    rpaddle_model_matrix = glm::translate(rpaddle_model_matrix, glm::vec3(5 - padwidth / 2, 0, 0));
+    // this is how to update the x position of the paddels at the start
+
 
     //lpaddle_model_matrix = glm::translate(lpaddle_model_matrix, glm::vec3(leftedge, 0, 0));
     //rpaddle_model_matrix = glm::translate(rpaddle_model_matrix, glm::vec3(rightedge, 0, 0));

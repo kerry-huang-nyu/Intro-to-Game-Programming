@@ -2,5 +2,18 @@ glm/
 shaders/
 
 .DS_Store
-.vscode/
+.vs/
 
+**.vcxproj**
+**/log.txt 
+**stb_image.h
+
+**/Debug
+**.cln
+**.dll
+**/ShaderProgram**
+**/Debug
+**.sln
+**.user
+
+SDLSimple/

@@ -11,7 +11,7 @@ shaders/
 **/Debug
 **.cln
 **.dll
-**/ShaderProgram**
+**/ShaderProgram
 **/Debug
 **.sln
 **.user

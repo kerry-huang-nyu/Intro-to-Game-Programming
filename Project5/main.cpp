@@ -1,7 +1,7 @@
 /**
 * Author: Kerry Huang
-* Assignment: Rise of the AI
-* Date due: 2024-03-23, 11:59pm
+* Assignment: Platformer
+* Date due: 2024-04-13, 11:59pm
 * I pledge that I have completed this assignment without
 * collaborating with anyone else, in conformance with the
 * NYU School of Engineering Policies and Procedures on
@@ -9,31 +9,19 @@
 **/
 
 /*
-Revamp entity class:
-    a. collision detection
-    b. pitfall detection
-    c. different types
-    d. platform nudging
-    e. update function in entity
-
-
-AI with different behaviors:
-    1. 1 only walks around 
-    2. 1 flys diagonally 
-    3. 1 follows/guards 
-New sound + sprites 
-    1. import new sound 
-Enemy defeat:
-    1. defeat individual enemies 
-Display Message:
-    1. display different messages 
-Extra Credit: 
-    1. Another way to die 
-
-
-Extra Stuff:
-    1. animation???
-    2. attack sounds??? 
+Menu Screen:
+    a. Scene objects 
+3 Levels:
+    a. all levels must scroll 
+    b. must have platforms 
+3 Lives:
+AI:
+    a. moving AI 
+    b. giant AI 
+    c. jumping AI 
+Audio:
+    a. normal bgm 
+    b. sound fx 
 */
 
 #include <vector>
@@ -55,16 +43,15 @@ Extra Stuff:
 
 #include <fstream> //just to output???
 
-#include "Entity.h"
-
 #include <iomanip>
 #include <sstream>
 #include <SDL_mixer.h>
 
-#define LEVEL1_WIDTH 16
-#define LEVEL1_HEIGHT 12
-
+#include "Entity.h"
 #include "Map.h"
+#include "Utility.h"
+#include "Scene.h"
+#include "Level1.h"
 
 
 SDL_Window* displayWindow;
@@ -88,10 +75,7 @@ const int VIEWPORT_X = 0,
     VIEWPORT_WIDTH = WINDOW_WIDTH,
     VIEWPORT_HEIGHT = WINDOW_HEIGHT;
 
-//compact disk quality frequency
-const int   CD_QUAL_FREQ = 44100,  
-            AUDIO_CHAN_AMT = 2,
-            AUDIO_BUFF_SIZE = 4096;
+
 
 //shaders 
 const char V_SHADER_PATH[] = "shaders/vertex_textured.glsl";     // make sure not to use std::string objects for these!
@@ -104,55 +88,12 @@ const char MAP_TILESET_FILEPATH[] = "grass.png";
 const char FONT_SPRITE[] = "font1.png";
 
 const char BGM_FILEPATH[] = "sweetdreams.mp3";
-const int    LOOP_FOREVER = -1;  // -1 means loop forever in Mix_PlayMusic; 0 means play once and loop zero times
 
-Mix_Music* g_music;
+bool endgame = false;
 
-
-//game state struct 
-struct GameState{
-
-    //states = { start_screen, save_file_screen, level_1, level_2 }
-
-
-    int NUM_PLATFORMS = 3;
-    int NUM_ENEMIES = 3;
-    int enemies_defeated = 0;
-    double gravity = -7;
-
-    bool endgame = false;
-    float* nightfall = new float(0);
-    float* night_level = new float(0);
-
-    Entity* player;
-
-    Map* map;
-
-    std::vector<Entity*> platforms;
-    std::vector<Entity*> enemies;
-};
-
-unsigned int LEVEL_1_DATA[] =
-{
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    97, 98, 98, 99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 97, 98, 98, 99, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0,
-    0, 0, 0, 0, 0, 0, 97, 98, 98, 99, 0, 0, 100, 0, 0, 0,
-    0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 97, 98, 99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
-
-GameState g_state; //game state object to access our players 
 
 
 std::ofstream logme;
-GLint font_texture_id;
 
 //shader program and matricies 
 glm::mat4 view_matrix, projection_matrix; //flip panes and field of view and projection of camera 
@@ -167,33 +108,23 @@ const GLint TEXTURE_BORDER = 0; // this value MUST be zero
 
 
 
+Scene* g_current_scene;
+Level1* g_level_1;
+
+void switch_to_scene(Scene* scene)
+{
+    g_current_scene = scene;
+    g_current_scene->initialise();
+}
+
+
 void initialize() {
 
 
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO); //initializing both video and audio  
-    
-    //Start Audio 
-    Mix_OpenAudio(
-        CD_QUAL_FREQ,   //frequency to playback audio at Hz
-        MIX_DEFAULT_FORMAT,     //audio format 
-        AUDIO_CHAN_AMT,         //channels. mono stero ...
-        AUDIO_BUFF_SIZE         //audio buffer size in sample frames 
-    );
-
-    // Similar to our custom function load_texture
-    g_music = Mix_LoadMUS(BGM_FILEPATH);
-
-    // This will schedule the music object to begin mixing for playback.
-    // The first parameter is the pointer to the mp3 we loaded 
-    // and second parameter is the number of times to loop.
-    Mix_PlayMusic(g_music, LOOP_FOREVER);
-
-    // Set the music to half volume
-    Mix_VolumeMusic(MIX_MAX_VOLUME/2); //MIX_MAX_VOLUME / 2
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO); //initializing both video and audio 
 
 
-
-    displayWindow = SDL_CreateWindow("Rise of AI", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
+    displayWindow = SDL_CreateWindow("Platformer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
     SDL_GLContext context = SDL_GL_CreateContext(displayWindow);
     SDL_GL_MakeCurrent(displayWindow, context);
 
@@ -220,90 +151,15 @@ void initialize() {
     projection_matrix = glm::ortho(-5.0f * zoomout + xmove, 5.0f * zoomout + xmove, -3.75f * zoomout + ymove, 3.75f * zoomout + ymove, -1.0f, 1.0f);  
     //model_matrix = glm::mat4(1.0f);
 
-    //map initializations: 
-    GLuint map_texture_id = load_texture(MAP_TILESET_FILEPATH);
-    g_state.map = new Map(LEVEL1_WIDTH, LEVEL1_HEIGHT, LEVEL_1_DATA, map_texture_id, 1.0f, 24, 8);  // Look at this beautiful initialisation. That's literally it
-    //g_state.map->normalize(10, 7.5); //normalize with the new coordinates of the view 
-    //g_state.map->normalize(0, 0); //normalize with the new coordinates of the view 
-
-    // player initializations 
-    g_state.player = new Entity();
-    g_state.player->set_position(glm::vec3(0.0f));
-    g_state.player->set_movement(glm::vec3(0.0f));
-    g_state.player->set_gravity(g_state.gravity);
-    //g_state.player->set_gravity(0); //added this just to debug please delete 
-    g_state.player->m_height = 1.0f;
-    g_state.player->m_width = 0.5f;
-
-    g_state.player->m_speed = 1.5f;
-    g_state.player->m_texture_id = load_texture(PLAYER_SPRITE);
-    g_state.player->m_entity_type = PLAYER;
     
-    g_state.player->m_walking[g_state.player->LEFT] = new int[4] { 95, 94, 93, 92 };
-    g_state.player->m_walking[g_state.player->RIGHT] = new int[4] { 16, 17, 18, 19 };
-    g_state.player->m_walking[g_state.player->UP] = new int[4] { 16, 17, 16, 17 };
-    g_state.player->m_walking[g_state.player->DOWN] = new int[4] { 0, 0, 0, 0 };
-    g_state.player->m_walking[g_state.player->IDLE] = new int[4] { 0, 0, 0, 1 };
-
-    g_state.player->m_animation_indices = g_state.player->m_walking[g_state.player->IDLE];  // start player looking down
-    g_state.player->m_animation_frames = 4;
-    g_state.player->m_animation_index = 0;
-    g_state.player->m_animation_time = 0.0f;
-    g_state.player->m_animation_cols = 8;
-    g_state.player->m_animation_rows = 18;
-
-    g_state.player->night_level = g_state.night_level;
-    g_state.player->nightfall = g_state.nightfall;
-
-
-    //create the enemies
-    std::vector<glm::vec3> enemy_initial_pos = {glm::vec3(1.0f, -2.0f, 0), glm::vec3(8.0f, 0.0f, 0), glm::vec3(13.0f, 5.0f, 0)};
-    std::vector<AIType> enemy_ai_type = {SORCERER, JUMPER, WALKER};
-    
-
-    for (int i = 0; i < g_state.NUM_ENEMIES; i++) {
-        Entity* enemy = new Entity();
-
-        g_state.enemies.push_back(enemy);
-        enemy->set_position(enemy_initial_pos[i]);
-        enemy->set_movement(glm::vec3(0.0f)); //may not even be needed check 
-
-        enemy->set_gravity(g_state.gravity);
-        enemy->m_height = 1.0f;
-        enemy->m_width = 0.5f;
-        enemy->m_entity_type = ENEMY;
-        enemy->m_ai_type = enemy_ai_type[i];
-
-        enemy->m_speed = 1.5f;
-        enemy->m_texture_id = load_texture(ENEMY_SPRITE);
-
-        enemy->m_walking[enemy->LEFT] = new int[4] { 99, 98, 97, 96 };
-        enemy->m_walking[enemy->RIGHT] = new int[4] { 10, 11, 12, 13 };
-        enemy->m_walking[enemy->UP] = new int[4] { 10, 11, 10, 11 };
-        enemy->m_walking[enemy->DOWN] = new int[4] { 57, 56, 55, 54 };
-        enemy->m_walking[enemy->IDLE] = new int[4] { 0, 0, 0, 1 };
-
-        enemy->m_animation_indices = enemy->m_walking[enemy->IDLE];  // start enemy looking down
-        enemy->m_animation_frames = 4;
-        enemy->m_animation_index = 0;
-        enemy->m_animation_time = 0.0f;
-        enemy->m_animation_cols = 10;
-        enemy->m_animation_rows = 16;
-
-        enemy->night_level = g_state.night_level;
-        enemy->nightfall = g_state.nightfall;
-    }
-
-
-    font_texture_id = load_texture(FONT_SPRITE); //then load font as well 
-
-
     //set our matricies 
     g_program.set_view_matrix(view_matrix);
     g_program.set_projection_matrix(projection_matrix);
-    
 
     glUseProgram(g_program.get_program_id());
+
+    g_level_1 = new Level1();
+    switch_to_scene(g_level_1);
 
 
     // enable blending
@@ -331,8 +187,6 @@ void update() {
     float delta_time = ticks - prev_ticks;     // the delta time is the difference from the last frame
     prev_ticks = ticks;
 
-    *(g_state.nightfall) += delta_time;
-
     //logme << *(g_state.nightfall) << " lol\n";
 
 
@@ -345,20 +199,8 @@ void update() {
     }
     while (delta_time >= FIXED_TIMESTEP) {
         //make updates to the thing 
-
-        //ensure that collisions are detected 
-        g_state.player->update(FIXED_TIMESTEP, g_state.player, g_state.enemies, g_state.map, logme);
-
-        g_state.enemies_defeated = 0;
-        for (int i = 0; i < g_state.NUM_ENEMIES; i++) {
-            if (g_state.enemies[i]->get_activity() == DEAD)
-                g_state.enemies_defeated++;
-            if (g_state.enemies_defeated == g_state.NUM_ENEMIES) {
-                g_state.endgame = true;
-            }
-            g_state.enemies[i]->update(FIXED_TIMESTEP, g_state.player, g_state.enemies, g_state.map, logme);
-        }
-
+        g_current_scene->update(FIXED_TIMESTEP);
+       
         delta_time -= FIXED_TIMESTEP;
     }
     time_accumulate = delta_time;
@@ -368,20 +210,10 @@ void update() {
     view_matrix = glm::mat4(1.0f);
     //bring it to the normal location 
     //view_matrix = glm::translate(view_matrix, glm::vec3(-5.0, 3.75, 0.0f));
+
     view_matrix = glm::translate(view_matrix, glm::vec3(0.0f, 3.75, 0.0f));
-    view_matrix = glm::translate(view_matrix, glm::vec3(-g_state.player->get_position().x, 0.0f, 0.0f));
+    view_matrix = glm::translate(view_matrix, glm::vec3(-g_current_scene->m_state.player->get_position().x, 0.0f, 0.0f));
     g_program.set_view_matrix(view_matrix);
-
-    if (*(g_state.night_level) > 0) {
-        BG_RED -= *(g_state.night_level);
-        BG_GREEN -= *(g_state.night_level);
-        BG_BLUE -= *(g_state.night_level);
-        *(g_state.night_level) = 0;
-    }
-
-    if (BG_BLUE <= 0) {
-        g_state.player->set_activity(DEAD);
-    }
 
     glClearColor(BG_RED, BG_GREEN, BG_BLUE, BG_OPACITY);
 }
@@ -404,18 +236,18 @@ void processinput() {
 
         const Uint8* key_state = SDL_GetKeyboardState(NULL);
 
-        g_state.player->set_direction(g_state.player->IDLE); //how to put this into the code instead of here
+        g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->IDLE); //how to put this into the code instead of here
 
         if (key_state[SDL_SCANCODE_LEFT]) {
-            g_state.player->set_direction(g_state.player->LEFT);
+            g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->LEFT);
         }
 
         if (key_state[SDL_SCANCODE_RIGHT]){
-            g_state.player->set_direction(g_state.player->RIGHT);
+            g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->RIGHT);
         }
 
         if (key_state[SDL_SCANCODE_UP]){
-            g_state.player->set_direction(g_state.player->UP);
+            g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->UP);
         }
     }
 }
@@ -424,48 +256,14 @@ void render() {
     // Step 1
     glClear(GL_COLOR_BUFFER_BIT);
 
-    g_state.map->render(&g_program, 0, 0); //10 and 7.5 is where its at 
-
-    g_state.player->render(&g_program);
-
-    for (int i = 0; i < g_state.NUM_ENEMIES; i++) {
-        g_state.enemies[i]->render(&g_program);
-    }
-    
-    
-    glm::vec3 position;
-
-    if (*(g_state.nightfall) < 5) {
-        position = { 2.5,-4, 0.0 };
-        draw_text(&g_program, font_texture_id, "Defeat the Wizards", 0.5, 0, position);
-        position = { 3,-5, 0.0 };
-        draw_text(&g_program, font_texture_id, "before Nightfall", 0.5, 0, position);
-    }
-
-    if (g_state.player->get_activity() == DEAD) {
-        position = { 2.0,-4, 0.0 };
-        draw_text(&g_program, font_texture_id, "Failed the Quest", 0.75, 0, position);
-        //glm::translate(g_state.rocket->m_model_matrix, m_position);
-    }
-    else if (g_state.enemies_defeated == g_state.NUM_ENEMIES) {
-        position = { 3.5,-4.0, 0.0 };
-        draw_text(&g_program, font_texture_id, "Sucess :)", 0.75, 0, position);
-    }
-
-    else if (BG_BLUE < 0.5 && BG_BLUE > 0.4) {
-        position = { 2,-4.0, 0.0 };
-        draw_text(&g_program, font_texture_id, "Crippled by Nightfall", 0.5, 0, position);
-    }
-
+    g_current_scene->render(&g_program);
 
     // Step 4
     SDL_GL_SwapWindow(displayWindow);
 }
 
 void shutdown() {
-    delete g_state.map;
-    delete g_state.nightfall;
-    Mix_FreeMusic(g_music);
+    delete g_level_1;
     SDL_Quit();
 }
 
@@ -478,7 +276,7 @@ int main(int argc, char* argv[]) {
     while (gameIsRunning) {
         processinput();
 
-        if (!g_state.endgame) {
+        if (!endgame) {
             update();
             render();
         }

@@ -63,9 +63,6 @@ public:
     int* m_animation_indices = NULL;
     float m_animation_time = 0.0f;
 
-    float* nightfall;
-    float* night_level;
-
 
     // ————— TRANSFORMATIONS ————— //
     float     m_speed;
@@ -102,7 +99,7 @@ public:
     void update(float delta_time, Entity* player, std::vector<Entity*>& others, Map* map);
 
     void animate(float delta_time);
-    void move(float delta_time, std::ofstream& log);
+    void move(float delta_time);
     void simulate_gravity(float delta_time);
     void render(ShaderProgram* program);
 
@@ -120,9 +117,9 @@ public:
 
 
     //------- AI methods ----------------
-    void ai_activate(float delta_time, Entity* player, std::ofstream&);
-    void ai_walk(std::ofstream& log);
-    void ai_jump(std::ofstream& log);
+    void ai_activate(float delta_time, Entity* player);
+    void ai_walk();
+    void ai_jump();
 
     //void ai_follow(Entity* player, std::ofstream& log);
     void ai_guard(Entity* player);
@@ -137,10 +134,10 @@ public:
 
     int        const get_direction()      const { return m_direction; }; 
     
-    void       const check_collision_entity(Entity*, std::ostream& log);
+    void       const check_collision_entity(Entity*);
 
-    void       const check_collision_y(Map* map, std::ofstream&);
-    void       const check_collision_x(Map* map, std::ofstream&);
+    void       const check_collision_y(Map* map);
+    void       const check_collision_x(Map* map);
 
     bool       const check_collision(Entity* collidable_entity);
 

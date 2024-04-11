@@ -21,16 +21,31 @@
 /**
     Notice that the game's state is now part of the Scene class, not the main file.
 */
+
 struct GameState
 {
-    // ————— GAME OBJECTS ————— //
-    Map* map;
+    int NUM_ENEMIES;
+
+    int enemies_defeated = 0;
+    
+    double gravity = -7;
+
+    GLint font_texture_id;
+
+    bool endgame = false; //may not be needed alskdjf;slkdfj;aslkdfj;salkdfj;lsakdjf;laskdjf;alksjdf;aslkdjfsafd
+
     Entity* player;
-    Entity* enemies;
+
+    Map* map;
+
+    std::vector<Entity*> enemies;
+
+
 
     // ————— AUDIO ————— //
     Mix_Music* bgm;
-    Mix_Chunk* jump_sfx;
+    
+    //Mix_Chunk* jump_sfx;
 
     // ————— POINTERS TO OTHER SCENES ————— //
     int next_scene_id;
@@ -39,7 +54,6 @@ struct GameState
 class Scene {
 public:
     // ————— ATTRIBUTES ————— //
-    int m_number_of_enemies = 1;
 
     GameState m_state;
 
@@ -50,5 +64,4 @@ public:
 
     // ————— GETTERS ————— //
     GameState const get_state()             const { return m_state; }
-    int       const get_number_of_enemies() const { return m_number_of_enemies; }
 };

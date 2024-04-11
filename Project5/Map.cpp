@@ -89,7 +89,7 @@ void Map::render(ShaderProgram* program)
     glDisableVertexAttribArray(program->get_position_attribute());
 }
 
-bool Map::is_solid(glm::vec3 position, float* penetration_x, float* penetration_y, std::ofstream& log)
+bool Map::is_solid(glm::vec3 position, float* penetration_x, float* penetration_y)
 {
     // The penetration between the map and the object
     // The reason why these are pointers is because we want to reassign values

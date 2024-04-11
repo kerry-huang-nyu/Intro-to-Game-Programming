@@ -74,7 +74,7 @@ void Entity::update(float delta_time, Entity* player, std::vector<Entity*>& othe
 
         
 
-        move(delta_time, log);
+        move(delta_time);
         m_model_matrix = glm::translate(m_model_matrix, m_position);
 
         if (m_entity_type == PLAYER) {
@@ -83,7 +83,7 @@ void Entity::update(float delta_time, Entity* player, std::vector<Entity*>& othe
                 if (others[i]->get_activity() == ALIVE) {
                     clear_collision();
 
-                    check_collision_entity(others[i], log);
+                    check_collision_entity(others[i]);
 
                     if (m_collided_right || m_collided_left || m_collided_top) {
                         set_activity(DEAD);
@@ -100,9 +100,9 @@ void Entity::update(float delta_time, Entity* player, std::vector<Entity*>& othe
             }
         }
 
-        check_collision_y(map, log);
-        check_collision_x(map, log);
-        if (m_entity_type == ENEMY) ai_activate(delta_time, player, log);
+        check_collision_y(map);
+        check_collision_x(map);
+        if (m_entity_type == ENEMY) ai_activate(delta_time, player);
 
         //maintain the jump attribute 
         
@@ -111,7 +111,7 @@ void Entity::update(float delta_time, Entity* player, std::vector<Entity*>& othe
     }
 }
 
-void Entity::move(float delta_time, std::ofstream& log) {
+void Entity::move(float delta_time) {
     switch (m_direction) {
         case RIGHT:
             m_velocity.x = 1;
@@ -199,16 +199,16 @@ void Entity::render(ShaderProgram* program)
     }
 }
 
-void Entity::ai_activate(float delta_time, Entity* player, std::ofstream& log)
+void Entity::ai_activate(float delta_time, Entity* player)
 {
     switch (m_ai_type)
     {
     case WALKER:
-        ai_walk(log);
+        ai_walk();
         break;
 
     case JUMPER:
-        ai_jump(log);
+        ai_jump();
         break;
 
     //case FOLLOWER:
@@ -224,7 +224,7 @@ void Entity::ai_activate(float delta_time, Entity* player, std::ofstream& log)
     }
 }
 
-void Entity::ai_walk(std::ofstream& log)
+void Entity::ai_walk()
 {
     //oscillation between left and right 
     action_frame++;
@@ -248,7 +248,7 @@ void Entity::ai_walk(std::ofstream& log)
     set_direction(ai_action[action_frame]);
 }
 
-void Entity::ai_jump(std::ofstream& log)
+void Entity::ai_jump()
 {
     //oscillation between left and right 
     action_frame++;
@@ -274,12 +274,6 @@ void Entity::ai_jump(std::ofstream& log)
 
 void Entity::ai_sorcery() {
     set_direction(IDLE);
-
-    if (int(*nightfall) % 6 <= 1) {
-        set_direction(DOWN);
-        *night_level += 0.00001;
-    }
-
 }
 
 
@@ -320,7 +314,7 @@ void Entity::ai_follow(Entity* player, std::ofstream& log)
     set_direction(ai_action[action_frame]);
 }*/
 
-void const Entity::check_collision_y(Map* map, std::ofstream& log)
+void const Entity::check_collision_y(Map* map)
 {
     // Probes for tiles above
     glm::vec3 top = glm::vec3(m_position.x, m_position.y + (m_height / 2), m_position.z);
@@ -337,19 +331,19 @@ void const Entity::check_collision_y(Map* map, std::ofstream& log)
 
     // If the map is solid, check the top three points
 
-    if (map->is_solid(top, &penetration_x, &penetration_y, log) && m_velocity.y > 0)
+    if (map->is_solid(top, &penetration_x, &penetration_y) && m_velocity.y > 0)
     {
         m_position.y -= penetration_y;
         m_velocity.y = 0;
         m_collided_top = true;
     }
-    else if (map->is_solid(top_left, &penetration_x, &penetration_y, log) && m_velocity.y > 0)
+    else if (map->is_solid(top_left, &penetration_x, &penetration_y) && m_velocity.y > 0)
     {
         m_position.y -= penetration_y;
         m_velocity.y = 0;
         m_collided_top = true;
     }
-    else if (map->is_solid(top_right, &penetration_x, &penetration_y, log) && m_velocity.y > 0)
+    else if (map->is_solid(top_right, &penetration_x, &penetration_y) && m_velocity.y > 0)
     {
         m_position.y -= penetration_y;
         m_velocity.y = 0;
@@ -358,26 +352,26 @@ void const Entity::check_collision_y(Map* map, std::ofstream& log)
 
     // And the bottom three points
     float dummy;
-    if (!map->is_solid(bottom_left, &dummy, &dummy, log) && map->is_solid(bottom_right, &dummy, &dummy, log) && m_velocity.y < 0) {
+    if (!map->is_solid(bottom_left, &dummy, &dummy) && map->is_solid(bottom_right, &dummy, &dummy) && m_velocity.y < 0) {
         m_pit_left = true;
     }
-    else if (!map->is_solid(bottom_right, &dummy, &dummy, log) && map->is_solid(bottom_left, &dummy, &dummy, log)  && m_velocity.y < 0) {
+    else if (!map->is_solid(bottom_right, &dummy, &dummy) && map->is_solid(bottom_left, &dummy, &dummy)  && m_velocity.y < 0) {
         m_pit_right = true;
     }
 
-    if (map->is_solid(bottom, &penetration_x, &penetration_y, log) && m_velocity.y < 0)
+    if (map->is_solid(bottom, &penetration_x, &penetration_y) && m_velocity.y < 0)
     {
         m_position.y += penetration_y;
         m_velocity.y = 0;
         m_collided_bottom = true;
     }
-    else if (map->is_solid(bottom_left, &penetration_x, &penetration_y, log) && m_velocity.y < 0)
+    else if (map->is_solid(bottom_left, &penetration_x, &penetration_y) && m_velocity.y < 0)
     {
         m_position.y += penetration_y;
         m_velocity.y = 0;
         m_collided_bottom = true;
     }
-    else if (map->is_solid(bottom_right, &penetration_x, &penetration_y, log) && m_velocity.y < 0)
+    else if (map->is_solid(bottom_right, &penetration_x, &penetration_y) && m_velocity.y < 0)
     {
         m_position.y += penetration_y;
         m_velocity.y = 0;
@@ -388,7 +382,7 @@ void const Entity::check_collision_y(Map* map, std::ofstream& log)
     
 }
 
-void const Entity::check_collision_x(Map* map, std::ofstream& log)
+void const Entity::check_collision_x(Map* map)
 {
     // Probes for tiles; the x-checking is much simpler
     glm::vec3 left = glm::vec3(m_position.x - (m_width / 2), m_position.y, m_position.z);
@@ -397,13 +391,13 @@ void const Entity::check_collision_x(Map* map, std::ofstream& log)
     float penetration_x = 0;
     float penetration_y = 0;
 
-    if (map->is_solid(left, &penetration_x, &penetration_y, log) && m_velocity.x < 0)
+    if (map->is_solid(left, &penetration_x, &penetration_y) && m_velocity.x < 0)
     {
         m_position.x += penetration_x;
         m_velocity.x = 0;
         m_collided_left = true;
     }
-    if (map->is_solid(right, &penetration_x, &penetration_y, log) && m_velocity.x > 0)
+    if (map->is_solid(right, &penetration_x, &penetration_y) && m_velocity.x > 0)
     {
         m_position.x -= penetration_x;
         m_velocity.x = 0;
@@ -411,7 +405,7 @@ void const Entity::check_collision_x(Map* map, std::ofstream& log)
     }
 }
 
-void const Entity::check_collision_entity(Entity* collidable_entity, std::ostream& log) {
+void const Entity::check_collision_entity(Entity* collidable_entity) {
     //log << " nooo \n";
     if (check_collision(collidable_entity))
     {

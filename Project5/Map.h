@@ -44,7 +44,7 @@ public:
     // Methods
     void build();
     void render(ShaderProgram* programz); 
-    bool is_solid(glm::vec3 position, float* penetration_x, float* penetration_y, std::ofstream& log);
+    bool is_solid(glm::vec3 position, float* penetration_x, float* penetration_y);
 
     // Getters
     int const get_width()  const { return m_width; }

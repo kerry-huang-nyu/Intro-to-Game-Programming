@@ -65,6 +65,11 @@ void Entity::draw_sprite_from_texture_atlas(ShaderProgram* program, GLuint textu
 void Entity::update(float delta_time, Entity* player, std::vector<Entity*>& others, Map* map) //why do we need to pass in the entity as player????
 {
     if (get_activity() == ALIVE) {
+        if (get_position().y <= -25) {
+            set_activity(DEAD);
+        }
+
+
         m_model_matrix = glm::mat4(1.0f);
         clear_collision();
         simulate_gravity(delta_time);

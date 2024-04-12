@@ -214,7 +214,7 @@ void initialize() {
     Mix_PlayMusic(g_music, LOOP_FOREVER);
 
     // Set the music to half volume
-    Mix_VolumeMusic(MIX_MAX_VOLUME/2);
+    Mix_VolumeMusic(0); //MIX_MAX_VOLUME / 2
 
 
 

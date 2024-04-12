@@ -1,13 +1,14 @@
 #pragma once
+#pragma once
 #include "Scene.h"
 
-class Level1 : public Scene {
+class LoadScreen : public Scene {
 public:
     // ————— STATIC ATTRIBUTES ————— //
-    
+
 
     // ————— CONSTRUCTOR ————— //
-    ~Level1();
+    ~LoadScreen();
 
     // ————— METHODS ————— //
     void initialise() override;

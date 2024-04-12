@@ -52,11 +52,18 @@ Audio:
 #include "Utility.h"
 #include "Scene.h"
 #include "Level1.h"
+#include "Level2.h"
+#include "Level3.h"
+#include "LoadScreen.h"
+#include "Effects.h"
 
 
 SDL_Window* displayWindow;
 bool gameIsRunning = true;
 int collisionStatus = 0;
+bool pause = false;
+
+int lives = 3;
 
 //background colors 
 float BG_RED = 0.53f,
@@ -82,14 +89,12 @@ const char V_SHADER_PATH[] = "shaders/vertex_textured.glsl";     // make sure no
 const char F_SHADER_PATH[] = "shaders/fragment_textured.glsl";
 
 const char PLAYER_SPRITE[] = "protagonist.png";
-const char ENEMY_SPRITE[] = "wizard.png";
+const char ENEMY_SPRITE[] = "bread.png";
 const char MAP_TILESET_FILEPATH[] = "grass.png";
 
 const char FONT_SPRITE[] = "font1.png";
 
-const char BGM_FILEPATH[] = "sweetdreams.mp3";
-
-bool endgame = false;
+const char BGM_FILEPATH[] = "bread_song.mp3";
 
 
 
@@ -109,7 +114,12 @@ const GLint TEXTURE_BORDER = 0; // this value MUST be zero
 
 
 Scene* g_current_scene;
-Level1* g_level_1;
+LoadScreen* loadscreen;
+std::vector<Scene*> scenes = {new Level1(), new Level2(), new Level3()};
+int curr_scene = 0;
+
+Effects* effects; 
+
 
 void switch_to_scene(Scene* scene)
 {
@@ -158,9 +168,12 @@ void initialize() {
 
     glUseProgram(g_program.get_program_id());
 
-    g_level_1 = new Level1();
-    switch_to_scene(g_level_1);
+    loadscreen = new LoadScreen();
+    switch_to_scene(loadscreen);
 
+    effects = new Effects(projection_matrix, view_matrix);
+    effects->start(FADEIN, 0.5f);
+    
 
     // enable blending
     glEnable(GL_BLEND);
@@ -181,13 +194,21 @@ const int FONTBANK_SIZE = 16;
 
 void update() {
 
+    if (g_current_scene->m_state.endgame == true) {
+        curr_scene++;
+        if (curr_scene >= scenes.size()) {
+            gameIsRunning = false;
+        }
+        else {
+            switch_to_scene(scenes[curr_scene]);
+        }
+    }
+
 
     //movement 
     float ticks = (float)SDL_GetTicks() / MILLISECONDS_IN_SECOND;  // get the current number of ticks
     float delta_time = ticks - prev_ticks;     // the delta time is the difference from the last frame
     prev_ticks = ticks;
-
-    //logme << *(g_state.nightfall) << " lol\n";
 
 
     //create a fixed timestep 
@@ -195,27 +216,32 @@ void update() {
 
     if (delta_time < FIXED_TIMESTEP) {
         time_accumulate = delta_time;
-        return;
     }
     while (delta_time >= FIXED_TIMESTEP) {
         //make updates to the thing 
         g_current_scene->update(FIXED_TIMESTEP);
-       
+        effects->update(FIXED_TIMESTEP);
         delta_time -= FIXED_TIMESTEP;
     }
     time_accumulate = delta_time;
 
-    //logme << " enemies_defeated " << g_state.enemies_defeated << "\n";
-
     view_matrix = glm::mat4(1.0f);
-    //bring it to the normal location 
-    //view_matrix = glm::translate(view_matrix, glm::vec3(-5.0, 3.75, 0.0f));
 
     view_matrix = glm::translate(view_matrix, glm::vec3(0.0f, 3.75, 0.0f));
     view_matrix = glm::translate(view_matrix, glm::vec3(-g_current_scene->m_state.player->get_position().x, 0.0f, 0.0f));
     g_program.set_view_matrix(view_matrix);
 
     glClearColor(BG_RED, BG_GREEN, BG_BLUE, BG_OPACITY);
+
+    if (g_current_scene->m_state.player->get_activity() == DEAD) {
+        if (lives > 1) {
+            lives--;
+            g_current_scene->reset();
+        }
+    }
+
+    
+    
 }
 
 
@@ -233,22 +259,42 @@ void processinput() {
                 break;
         }
 
+        if (SDL_KEYDOWN && (event.key.keysym.sym == SDLK_SPACE)) {
+            if (g_current_scene == loadscreen) {
+                switch_to_scene(scenes[curr_scene]);
+            }
+        }
+
+        if (SDL_KEYDOWN && (event.key.keysym.sym == SDLK_p)) {
+            pause = true;
+        }
+
+
+        if (SDL_KEYDOWN && (event.key.keysym.sym == SDLK_r)) {
+            pause = false;
+        }
+
+
 
         const Uint8* key_state = SDL_GetKeyboardState(NULL);
 
-        g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->IDLE); //how to put this into the code instead of here
+        if (g_current_scene != loadscreen) {
+            g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->IDLE); //how to put this into the code instead of here
 
-        if (key_state[SDL_SCANCODE_LEFT]) {
-            g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->LEFT);
+            if (key_state[SDL_SCANCODE_LEFT]) {
+                g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->LEFT);
+            }
+
+            if (key_state[SDL_SCANCODE_RIGHT]) {
+                g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->RIGHT);
+            }
+
+            if (key_state[SDL_SCANCODE_UP]) {
+                g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->UP);
+            }
         }
 
-        if (key_state[SDL_SCANCODE_RIGHT]){
-            g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->RIGHT);
-        }
 
-        if (key_state[SDL_SCANCODE_UP]){
-            g_current_scene->m_state.player->set_direction(g_current_scene->m_state.player->UP);
-        }
     }
 }
 
@@ -256,14 +302,24 @@ void render() {
     // Step 1
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glUseProgram(g_program.get_program_id());
+
     g_current_scene->render(&g_program);
+    effects->render();
+
+   /* glm::vec3 position;
+    position = { 0.0, 0.0, 0.0 };
+    Utility::draw_text(&g_program, font_texture_id, "Have I been here before?", 0.5, 0, position);*/
 
     // Step 4
     SDL_GL_SwapWindow(displayWindow);
 }
 
 void shutdown() {
-    delete g_level_1;
+    for (Scene* ptr : scenes) {
+        delete ptr;
+    }
+    delete effects;
     SDL_Quit();
 }
 
@@ -276,7 +332,7 @@ int main(int argc, char* argv[]) {
     while (gameIsRunning) {
         processinput();
 
-        if (!endgame) {
+        if (pause == false) {
             update();
             render();
         }

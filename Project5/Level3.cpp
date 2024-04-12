@@ -1,6 +1,7 @@
-// Level1.cpp
-#include "Level1.h"
+// Level3.cpp
+#include "Level3.h"
 #include "Utility.h"
+#include "Effects.h"
 
 #define LEVEL_WIDTH 16
 #define LEVEL_HEIGHT 12
@@ -19,23 +20,23 @@ ALL_SFX_CHN = -1;
 
 const int    LOOP_FOREVER = -1;  // -1 means loop forever in Mix_PlayMusic; 0 means play once and loop zero times
 
-unsigned int LEVEL_DATA[] =
+unsigned int LEVEL_DATA_3[] =
 {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    97, 98, 98, 99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 97, 98, 98, 99, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0,
-    0, 0, 0, 0, 0, 0, 97, 98, 98, 99, 0, 0, 100, 0, 0, 0,
-    0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 97, 98, 99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 100,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 97, 98, 99, 0, 0, 0, 0, 100, 0, 0,
+    0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100,
+    100, 0, 0, 100, 0, 0, 100, 0, 0, 0, 0, 100, 0, 100, 0, 0,
+    0, 0, 0, 0, 0, 100, 0, 0, 100, 0, 100, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-Level1::~Level1()
+Level3::~Level3()
 {
     delete    m_state.player;
     delete    m_state.map;
@@ -44,12 +45,12 @@ Level1::~Level1()
     Mix_FreeMusic(m_state.bgm);
 }
 
-void Level1::initialise()
+void Level3::initialise()
 {
 
     //map initializations: 
     GLuint map_texture_id = Utility::load_texture("grass.png");
-    m_state.map = new Map(LEVEL_WIDTH, LEVEL_HEIGHT, LEVEL_DATA, map_texture_id, 1.0f, 24, 8);  // Look at this beautiful initialisation. That's literally it
+    m_state.map = new Map(LEVEL_WIDTH, LEVEL_HEIGHT, LEVEL_DATA_3, map_texture_id, 1.0f, 24, 8);  // Look at this beautiful initialisation. That's literally it
     //m_state.map->normalize(10, 7.5); //normalize with the new coordinates of the view 
     //m_state.map->normalize(0, 0); //normalize with the new coordinates of the view 
 
@@ -84,10 +85,10 @@ void Level1::initialise()
 
 
     //create the enemies
-    std::vector<glm::vec3> enemy_initial_pos = { glm::vec3(1.0f, -3.0f, 0), glm::vec3(8.0f, 0.0f, 0), glm::vec3(13.0f, 5.0f, 0) };
-    std::vector<AIType> enemy_ai_type = { SORCERER, JUMPER, WALKER };
+    std::vector<glm::vec3> enemy_initial_pos = { glm::vec3(8.0f, 0.0f, 0)};
+    std::vector<AIType> enemy_ai_type = {JUMPER};
 
-    m_state.NUM_ENEMIES = 3;
+    m_state.NUM_ENEMIES = 1;
 
     for (int i = 0; i < m_state.NUM_ENEMIES; i++) {
         Entity* enemy = new Entity();
@@ -122,7 +123,7 @@ void Level1::initialise()
     }
 
 
-    
+
 
 
 
@@ -139,6 +140,7 @@ void Level1::initialise()
 
     // Similar to our custom function load_texture
     m_state.bgm = Mix_LoadMUS("bread_song.mp3");
+
     m_state.eat_fx = Mix_LoadWAV("crunch.wav");
 
     // This will schedule the music object to begin mixing for playback.
@@ -153,18 +155,19 @@ void Level1::initialise()
         m_state.eat_fx,     // Set the volume of the bounce sound...
         MIX_MAX_VOLUME / 4  // ... to 1/4th.
     );
+
+    //m_state.jump_sfx = Mix_LoadWAV("assets/bounce.wav");
 }
 
-void Level1::reset() 
+void Level3::reset()
 {
     m_state.endgame = false;
     m_state.player->set_activity(ALIVE);
     m_state.player->set_position(glm::vec3(0));
     m_state.player->m_movement = glm::vec3(0);
-    
 }
 
-void Level1::update(float delta_time)
+void Level3::update(float delta_time)
 {
     m_state.player->update(delta_time, m_state.player, m_state.enemies, m_state.map);
 
@@ -183,7 +186,7 @@ void Level1::update(float delta_time)
     m_state.enemies_defeated_past = m_state.enemies_defeated;
 }
 
-void Level1::render(ShaderProgram* program)
+void Level3::render(ShaderProgram* program)
 {
     m_state.map->render(program);
     m_state.player->render(program);
@@ -193,9 +196,9 @@ void Level1::render(ShaderProgram* program)
     }
 
     glm::vec3 position;
-    position = {2.0, -1, 0.0};
+    position = { 2.0, -1, 0.0 };
 
-    Utility::draw_text(program, m_state.font_texture_id, "Have I been here before?", 0.5, 0, position);
+    Utility::draw_text(program, m_state.font_texture_id, "Final Bosssssss", 0.5, 0, position);
 
 
     if (m_state.player->get_activity() == DEAD) {

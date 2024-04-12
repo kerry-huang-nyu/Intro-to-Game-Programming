@@ -26,13 +26,14 @@ struct GameState
 {
     int NUM_ENEMIES;
 
+    int enemies_defeated_past = 0;
     int enemies_defeated = 0;
     
     double gravity = -7;
 
     GLint font_texture_id;
 
-    bool endgame = false; //may not be needed alskdjf;slkdfj;aslkdfj;salkdfj;lsakdjf;laskdjf;alksjdf;aslkdjfsafd
+    bool endgame = false; 
 
     Entity* player;
 
@@ -44,11 +45,9 @@ struct GameState
 
     // ————— AUDIO ————— //
     Mix_Music* bgm;
+    Mix_Chunk* eat_fx;
     
     //Mix_Chunk* jump_sfx;
-
-    // ————— POINTERS TO OTHER SCENES ————— //
-    int next_scene_id;
 };
 
 class Scene {
@@ -61,6 +60,7 @@ public:
     virtual void initialise() = 0;
     virtual void update(float delta_time) = 0;
     virtual void render(ShaderProgram* program) = 0;
+    virtual void reset() = 0;
 
     // ————— GETTERS ————— //
     GameState const get_state()             const { return m_state; }

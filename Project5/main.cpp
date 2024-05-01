@@ -196,10 +196,7 @@ void update() {
 
     if (g_current_scene->m_state.endgame == true) {
         curr_scene++;
-        if (curr_scene >= scenes.size()) {
-            gameIsRunning = false;
-        }
-        else {
+        if (curr_scene < scenes.size()) {
             switch_to_scene(scenes[curr_scene]);
         }
     }

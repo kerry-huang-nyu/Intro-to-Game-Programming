@@ -33,17 +33,18 @@
 #include "Scene.h"
 #include "Level1.h"
 #include "Level2.h"
-
-#include "LoadScreen.h"
+#include "Level3.h"
+#include "Level0.h"
 
 
 SDL_Window* displayWindow;
 bool gameIsRunning = true;
+bool won_game = false;
 
 //background colors 
-float BG_RED = 0.53f,
-BG_GREEN = 0.80f,
-BG_BLUE = 0.92f,
+float BG_RED = 0.00f,
+BG_GREEN = 0.00f,
+BG_BLUE = 0.00f,
 BG_OPACITY = 1.0f;
 
 
@@ -99,11 +100,11 @@ const int NUMBER_OF_TEXTURES = 1; // to be generated, that is
 const GLint LEVEL_OF_DETAIL = 0; // base image level; Level n is the nth mipmap reduction image
 const GLint TEXTURE_BORDER = 0; // this value MUST be zero
 
+GLint font_texture_id;
 
 
 Scene* g_current_scene;
-LoadScreen* loadscreen;
-std::vector<Scene*> scenes = {new Level1(), new Level2()};
+std::vector<Scene*> scenes = {new Level0(), new Level1(), new Level2(), new Level3()};
 int curr_scene = 0;
 
 
@@ -155,13 +156,13 @@ void initialize() {
     //set our matrices for text 
     text_program.set_view_matrix(view_matrix);
     text_program.set_projection_matrix(projection_matrix);
+    font_texture_id = Utility::load_texture("font1.png"); //then load font as well 
 
     glUseProgram(g_program.get_program_id());
 
-    //loadscreen = new LoadScreen();
-    switch_to_scene(scenes[0]);
-    
 
+    switch_to_scene(scenes[0]);
+  
     // enable blending
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -179,9 +180,13 @@ const float FIXED_TIMESTEP = 0.0005f; //0.0005f;
 void update() {
     
     if (g_current_scene->m_state.endgame == true) {
-        curr_scene++;
+        
         if (curr_scene < scenes.size()) {
+            curr_scene++;
             switch_to_scene(scenes[curr_scene]);
+        }
+        else {
+            won_game = true;
         }
     }
 
@@ -251,7 +256,8 @@ void processinput() {
         }
 
         if (SDL_KEYDOWN && (event.key.keysym.sym == SDLK_SPACE)) {
-            if (g_current_scene == loadscreen) {
+            if (curr_scene == 0) {
+                curr_scene++;
                 switch_to_scene(scenes[curr_scene]);
             }
         }
@@ -264,26 +270,21 @@ void render() {
     // Step 1
     glClear(GL_COLOR_BUFFER_BIT);
 
+
+
     g_current_scene->render(&g_program, &text_program, logme);
 
-   
-    /*
-    glm::mat4 modelmat = glm::mat4(1.0f);
-
-    g_program.set_model_matrix(modelmat);
-
-    float vertices[] = { 0.5f, -0.5f, 0.0f, 0.5f, -0.5f, -0.5f };
 
 
-    glVertexAttribPointer(g_program.get_position_attribute(), 2, GL_FLOAT, false, 0, vertices);
-    glEnableVertexAttribArray(g_program.get_position_attribute());
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDisableVertexAttribArray(g_program.get_position_attribute());
-    */
+    glm::vec3 position;
+    position = { -1.5, 3.0, 0.0 };
+    std::string message = "Level: " + std::to_string(curr_scene);
+    Utility::draw_text(&text_program, font_texture_id, message, 0.4, 0, position);
 
-   /* glm::vec3 position;
-    position = { 0.0, 0.0, 0.0 };
-    Utility::draw_text(&g_program, font_texture_id, "Have I been here before?", 0.5, 0, position);*/
+    if (won_game == true) {
+        position = { -2, 0.0, 0.0 };
+        Utility::draw_text(&text_program, font_texture_id, "YOU WON", 0.8, 0, position);
+    }
 
     // Step 4
     SDL_GL_SwapWindow(displayWindow);

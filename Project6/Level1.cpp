@@ -93,7 +93,7 @@ void Level1::spawn(float x, float y, int fruitindex)
 
     if (fruitindex == -1) {
         randomNumber = fruit_stats.nextfruit;
-        fruit_stats.nextfruit = gen() % 3;
+        fruit_stats.nextfruit = gen() % 2;
     }
 
     Entity* fruit = new Entity();
@@ -195,7 +195,7 @@ void Level1::render_next_fruit(ShaderProgram* program, ShaderProgram* text_progr
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glm::vec3 position = { 2.25, 3.0, 0.0 };
-    Utility::draw_text(text_program, m_state.font_texture_id, "Next Fruit", 0.25, 0, position);
+    Utility::draw_text(text_program, m_state.font_texture_id, "Next Ball", 0.25, 0, position);
     glUseProgram(program->get_program_id());
 
     //create the new fruit 
@@ -226,7 +226,7 @@ void Level1::render_goals(ShaderProgram* program, ShaderProgram* text_program, s
     for (int i = 0; i < 6; i++) {
 
         if (goals.forbid[i] == true) { //if they have no criterias 
-            message = names[i] + " = 0";
+            message = names[i] + " prohibited";
         }
         else if (goals.have[i] != 0) {
             message = names[i] + " >= " + std::to_string(goals.have[i]);
@@ -246,7 +246,8 @@ void Level1::render_goals(ShaderProgram* program, ShaderProgram* text_program, s
 
 void Level1::render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
 {
-    program->set_colour(1.0f, 1.0f, 1.0f, 1.0f);
+
+    program->set_colour(1.0f / 3, 1.0f / 3, 1.0f/ 3, 1.0f);
     Utility::render(program, m_state.engine.constraint.m_model_matrix, m_state.engine.constraint.m_radius, 64, log);
     program->set_colour(1.0f, 0.0f, 0.0f, 1.0f);
 

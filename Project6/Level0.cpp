@@ -1,5 +1,5 @@
-// Level2.cpp
-#include "Level2.h"
+// Level0.cpp
+#include "Level0.h"
 #include "Utility.h"
 
 #include "Physics.h"
@@ -23,7 +23,7 @@ ALL_SFX_CHN = -1;
 const int    LOOP_FOREVER = -1;  // -1 means loop forever in Mix_PlayMusic; 0 means play once and loop zero times
 
 
-Level2::~Level2()
+Level0::~Level0()
 {
 
     Mix_FreeChunk(m_state.eat_fx);
@@ -34,7 +34,7 @@ Level2::~Level2()
     }
 }
 
-void Level2::initialise()
+void Level0::initialise()
 {
 
     m_state.font_texture_id = Utility::load_texture("font1.png"); //then load font as well 
@@ -44,10 +44,21 @@ void Level2::initialise()
     m_state.engine.set_constraint(2.5f); //set my constraint to be a 4 radius circle 
 
 
-    //We need the Goals2 
-    Goals2.have = { 6, 0, 2, 0, 1, 0 };
-    Goals2.forbid = { false, false, false, false, false, false };
+    //We need the Goals0 
+    Goals0.have = { 0, 0, 0, 0, 0, 0 };
+    Goals0.forbid = { true, true, true, true, true, true };
 
+
+    for (int i = 0; i < 6; i++) {
+
+        //gotta pick x and y; 
+        float x, y, range;
+        x = ((float)rand() / RAND_MAX) * 5.0f - 2.5f;
+        range = sqrt(2.5 * 2.5 - x * x);
+        y = ((float)rand() / RAND_MAX) * 2 * range - range;
+
+        my_spawn(x, y, i);
+    }
 
     /**
      BGM and SFX
@@ -78,7 +89,7 @@ void Level2::initialise()
     );
 }
 
-void Level2::reset()
+void Level0::reset()
 {
     m_state.endgame = false;
     /* m_state.player->set_status(ALIVE);
@@ -87,13 +98,13 @@ void Level2::reset()
 
 }
 
-void Level2::spawn(float x, float y, int fruitindex)
+void Level0::my_spawn(float x, float y, int fruitindex)
 {
     int randomNumber = fruitindex;
 
     if (fruitindex == -1) {
         randomNumber = fruit_stats.nextfruit;
-        fruit_stats.nextfruit = gen() % 3;
+        fruit_stats.nextfruit = gen() % 2;
     }
 
     Entity* fruit = new Entity();
@@ -111,7 +122,11 @@ void Level2::spawn(float x, float y, int fruitindex)
     fruit->m_prev_position = glm::vec3(x, y, 0.0f);
 }
 
-void Level2::clean_death() {
+void Level0::spawn(float x, float y, int fruitindex) {
+
+}
+
+void Level0::clean_death() {
     int start = -1; //start is the first hole 
 
     for (int i = 0; i < m_state.fruits.size(); i++) {
@@ -133,13 +148,13 @@ void Level2::clean_death() {
 
 }
 
-void Level2::spawn_new_fruits(std::vector<Info>& info) {
+void Level0::spawn_new_fruits(std::vector<Info>& info) {
     for (Info& fruit : info) {
         spawn(fruit.x, fruit.y, fruit.index);
     }
 }
 
-bool Level2::check_win()
+bool Level0::check_win()
 {
     if (m_state.endgame == true) {
         return true; //stop checking at this pt 
@@ -154,11 +169,11 @@ bool Level2::check_win()
     }
 
     for (int i = 0; i < 6; i++) {
-        if (Goals2.have[i] > count[i]) {
+        if (Goals0.have[i] > count[i]) {
             m_state.endgame = false;
             break;
         }
-        if ((Goals2.forbid[i] == true) && (count[i] > 0)) {
+        if ((Goals0.forbid[i] == true) && (count[i] > 0)) {
             m_state.endgame = false;
             break;
         }
@@ -166,11 +181,8 @@ bool Level2::check_win()
     return m_state.endgame;
 }
 
-void Level2::update(float delta_time, std::ofstream& log)
+void Level0::update(float delta_time, std::ofstream& log)
 {
-    if (check_win() == true) {
-        return;
-    }
 
     m_state.engine.apply_gravity(m_state.fruits);
     std::vector<Info> info = m_state.engine.check_collisions(m_state.fruits);
@@ -184,10 +196,14 @@ void Level2::update(float delta_time, std::ofstream& log)
 
     for (int i = 0; i < m_state.fruits.size(); i++) { //update objects 
         m_state.fruits[i]->update(delta_time, log);
+        log << "location of   " << i << "   " << m_state.fruits[i]->get_position().x << "   "
+            << m_state.fruits[i]->get_position().y << "\n";
     }
+
+    
 }
 
-void Level2::render_next_fruit(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
+void Level0::render_next_fruit(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
 {
     //render the next fruit 
     glUseProgram(text_program->get_program_id());
@@ -208,7 +224,7 @@ void Level2::render_next_fruit(ShaderProgram* program, ShaderProgram* text_progr
 
 }
 
-void Level2::render_Goals2(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log) {
+void Level0::render_Goals0(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log) {
 
     glm::vec3 position = { -4.8, 3.0, 0.0 };
     glm::vec3 increment = { 0.0, -1.0, 0.0 };
@@ -225,11 +241,11 @@ void Level2::render_Goals2(ShaderProgram* program, ShaderProgram* text_program, 
 
     for (int i = 0; i < 6; i++) {
 
-        if (Goals2.forbid[i] == true) { //if they have no criterias 
+        if (Goals0.forbid[i] == true) { //if they have no criterias 
             message = names[i] + " prohibited";
         }
-        else if (Goals2.have[i] != 0) {
-            message = names[i] + " >= " + std::to_string(Goals2.have[i]);
+        else if (Goals0.have[i] != 0) {
+            message = names[i] + " >= " + std::to_string(Goals0.have[i]);
         }
         else {
             message = names[i] + " no limit";
@@ -241,11 +257,12 @@ void Level2::render_Goals2(ShaderProgram* program, ShaderProgram* text_program, 
         message = "";
     }
 
-    glUseProgram(program->get_program_id());
+    
 }
 
-void Level2::render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
+void Level0::render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
 {
+
     program->set_colour(1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f);
     Utility::render(program, m_state.engine.constraint.m_model_matrix, m_state.engine.constraint.m_radius, 64, log);
     program->set_colour(1.0f, 0.0f, 0.0f, 1.0f);
@@ -260,6 +277,11 @@ void Level2::render(ShaderProgram* program, ShaderProgram* text_program, std::of
     }
 
     render_next_fruit(program, text_program, log);
-    render_Goals2(program, text_program, log);
+    render_Goals0(program, text_program, log);
 
+    //render the message to use space 
+    glm::vec3 position = { -3.0, -3.0, 0.0 };
+    Utility::draw_text(text_program, m_state.font_texture_id, "Press Space to Start", 0.3, 0, position);
+
+    glUseProgram(program->get_program_id());
 }

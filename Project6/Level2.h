@@ -49,7 +49,7 @@ public:
     void clean_death();
     void spawn_new_fruits(std::vector<Info>& info);
 
-    void check_win();
+    bool check_win();
 
     void reset() override;
 };

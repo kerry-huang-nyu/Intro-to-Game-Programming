@@ -1,10 +1,11 @@
 #pragma once
+#pragma once
 #include "Scene.h"
 
 #include <random>
 
 
-struct FruitStats3 {
+struct FruitStats0 {
     //status about fruits but also stats on the user 
     std::vector<std::vector<float>> COLOR = { {1.0f, 0.0f, 0.0f, 1.0f},
         {1.0f, 0.5f, 0.0f, 1.0f },
@@ -18,33 +19,34 @@ struct FruitStats3 {
     int nextfruit = 0;
 };
 
-struct Goals3 {
+struct Goals0 {
     std::vector<int> have;
     std::vector<bool> forbid;
     int clicks;
 };
 
-class Level3 : public Scene {
+class Level0 : public Scene {
 public:
 
     std::random_device rd;
     std::mt19937 gen;
 
-    FruitStats3 fruit_stats;
-    Goals3 Goals3;
+    FruitStats0 fruit_stats;
+    Goals0 Goals0;
 
     // ————— CONSTRUCTOR ————— //
-    ~Level3();
+    ~Level0();
 
     // ————— METHODS ————— //
     void initialise() override;
     void update(float delta_time, std::ofstream& log) override;
 
     void render_next_fruit(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log);
-    void render_Goals3(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log);
+    void render_Goals0(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log);
 
     void render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream&) override;
     void spawn(float x, float y, int fruitindex) override;
+    void my_spawn(float x, float y, int fruitindex);
 
     void clean_death();
     void spawn_new_fruits(std::vector<Info>& info);

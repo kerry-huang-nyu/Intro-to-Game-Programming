@@ -104,7 +104,7 @@ GLint font_texture_id;
 
 
 Scene* g_current_scene;
-std::vector<Scene*> scenes = {new Level0(), new Level1(), new Level2(), new Level3()};
+std::vector<Scene*> scenes;
 int curr_scene = 0;
 
 
@@ -160,7 +160,8 @@ void initialize() {
 
     glUseProgram(g_program.get_program_id());
 
-
+    scenes = { new Level0(), new Level1(), new Level2(), new Level3() };
+    logme << " am i a nullptr?? " << (scenes[0] == nullptr);
     switch_to_scene(scenes[0]);
   
     // enable blending
@@ -305,7 +306,6 @@ int main(int argc, char* argv[]) {
     
     while (gameIsRunning) {
         processinput();
-
         update();
         render();
     }

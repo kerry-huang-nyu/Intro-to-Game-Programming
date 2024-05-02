@@ -25,8 +25,6 @@ const int    LOOP_FOREVER = -1;  // -1 means loop forever in Mix_PlayMusic; 0 me
 
 Level1::~Level1()
 {
-
-    Mix_FreeChunk(m_state.eat_fx);
     Mix_FreeMusic(m_state.bgm);
 
     for (Entity* ptr : m_state.fruits) {
@@ -62,7 +60,6 @@ void Level1::initialise()
 
     // Similar to our custom function load_texture
     m_state.bgm = Mix_LoadMUS("bread_song.mp3");
-    m_state.eat_fx = Mix_LoadWAV("crunch.wav");
 
     // This will schedule the music object to begin mixing for playback.
     // The first parameter is the pointer to the mp3 we loaded 
@@ -71,11 +68,6 @@ void Level1::initialise()
 
     // Set the music to half volume
     Mix_VolumeMusic(MIX_MAX_VOLUME / 2); //MIX_MAX_VOLUME / 2
-
-    Mix_VolumeChunk(
-        m_state.eat_fx,     // Set the volume of the bounce sound...
-        MIX_MAX_VOLUME / 4  // ... to 1/4th.
-    );
 }
 
 void Level1::reset() 

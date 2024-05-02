@@ -38,7 +38,6 @@ struct GameState
 
     // ————— AUDIO ————— //
     Mix_Music* bgm;
-    Mix_Chunk* eat_fx;
 
     Physics engine;
     

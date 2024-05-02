@@ -32,6 +32,7 @@
 #include "Utility.h"
 #include "Scene.h"
 #include "Level1.h"
+#include "Level2.h"
 
 #include "LoadScreen.h"
 
@@ -44,6 +45,18 @@ float BG_RED = 0.53f,
 BG_GREEN = 0.80f,
 BG_BLUE = 0.92f,
 BG_OPACITY = 1.0f;
+
+
+enum Coordinate { x_coordinate, y_coordinate };
+
+const Coordinate X_COORDINATE = x_coordinate;
+const Coordinate Y_COORDINATE = y_coordinate;
+
+
+//tell professor that the ortho width and height are messed up and that could be causing a lot of pain
+const float ORTHO_WIDTH = 10.0f,
+ORTHO_HEIGHT = 7.5f;
+
 
 
 //window sizes and dimensions 
@@ -62,6 +75,11 @@ const int VIEWPORT_X = 0,
 const char V_SHADER_PATH[] = "shaders/vertex.glsl";     // make sure not to use std::string objects for these!
 const char F_SHADER_PATH[] = "shaders/fragment.glsl";
 
+const char V_TEXT_SHADER_PATH[] = "shaders/vertex_textured.glsl";     // make sure not to use std::string objects for these!
+const char F_TEXT_SHADER_PATH[] = "shaders/fragment_textured.glsl";
+
+
+
 const char FONT_SPRITE[] = "font1.png";
 
 const char BGM_FILEPATH[] = "bread_song.mp3";
@@ -74,7 +92,7 @@ std::ofstream logme;
 glm::mat4 view_matrix, projection_matrix; //flip panes and field of view and projection of camera 
 
 //shader 
-ShaderProgram g_program;
+ShaderProgram g_program, text_program;
 
 
 const int NUMBER_OF_TEXTURES = 1; // to be generated, that is
@@ -85,7 +103,7 @@ const GLint TEXTURE_BORDER = 0; // this value MUST be zero
 
 Scene* g_current_scene;
 LoadScreen* loadscreen;
-std::vector<Scene*> scenes = {new Level1()};
+std::vector<Scene*> scenes = {new Level1(), new Level2()};
 int curr_scene = 0;
 
 
@@ -101,7 +119,7 @@ void initialize() {
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO); //initializing both video and audio 
 
-    displayWindow = SDL_CreateWindow("Suika Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
+    displayWindow = SDL_CreateWindow("Ballz", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
     SDL_GLContext context = SDL_GL_CreateContext(displayWindow);
     SDL_GL_MakeCurrent(displayWindow, context);
 
@@ -110,7 +128,9 @@ void initialize() {
 #endif
 
     glViewport(VIEWPORT_X, VIEWPORT_Y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);  //create camera    // Initialise our camera
+    
     g_program.load(V_SHADER_PATH, F_SHADER_PATH); //create shaders 
+    text_program.load(V_TEXT_SHADER_PATH, F_TEXT_SHADER_PATH); //create shaders for text 
 
     // Initialise our view, model, and projection matrices
     view_matrix = glm::mat4(1.0f);
@@ -118,7 +138,7 @@ void initialize() {
     //for entities. reset to the initial position and then translate into the desired position. 
     //modle matrix = translate into initial position 
     //
-    float zoomout = 2.5;
+    float zoomout = 1;
     float xmove = 0;
     float ymove = 0;
     
@@ -130,6 +150,11 @@ void initialize() {
     g_program.set_view_matrix(view_matrix);
     g_program.set_projection_matrix(projection_matrix);
     g_program.set_colour(1.0f, 0.0f, 0.0f, 1.0f);
+
+
+    //set our matrices for text 
+    text_program.set_view_matrix(view_matrix);
+    text_program.set_projection_matrix(projection_matrix);
 
     glUseProgram(g_program.get_program_id());
 
@@ -148,19 +173,17 @@ void initialize() {
 const float MILLISECONDS_IN_SECOND = 1000.0;
 float prev_ticks = 0;
 float time_accumulate = 0;
-const float FIXED_TIMESTEP = 0.0001;
+const float FIXED_TIMESTEP = 0.0005f; //0.0005f;
 
 
 void update() {
     
-
     if (g_current_scene->m_state.endgame == true) {
         curr_scene++;
         if (curr_scene < scenes.size()) {
             switch_to_scene(scenes[curr_scene]);
         }
     }
-
 
     //movement 
     float ticks = (float)SDL_GetTicks() / MILLISECONDS_IN_SECOND;  // get the current number of ticks
@@ -184,11 +207,20 @@ void update() {
 
     view_matrix = glm::mat4(1.0f);
 
-    
+
 }
 
 
 
+float get_screen_to_ortho(float coordinate, Coordinate axis)
+{
+    switch (axis)
+    {
+    case x_coordinate: return ((coordinate / WINDOW_WIDTH) * ORTHO_WIDTH) - (ORTHO_WIDTH / 2.0);
+    case y_coordinate: return (((WINDOW_HEIGHT - coordinate) / WINDOW_HEIGHT) * ORTHO_HEIGHT) - (ORTHO_HEIGHT / 2.0);
+    default: return 0.0f;
+    }
+}
 
 void processinput() {
     SDL_Event event;
@@ -206,10 +238,15 @@ void processinput() {
                 // event.motion.x
                 // event.motion.y
                 // event.button.button
+                
 
                 int x, y;
                 SDL_GetMouseState(&x, &y);
-                g_current_scene->spawn(x, y);
+
+                float x_val = get_screen_to_ortho(x, x_coordinate);
+                float y_val = get_screen_to_ortho(y, y_coordinate);
+
+                g_current_scene->spawn(x_val, y_val, -1);
 
         }
 
@@ -220,17 +257,14 @@ void processinput() {
         }
 
         const Uint8* key_state = SDL_GetKeyboardState(NULL);
-    
-
     }
-    
 }
 
 void render() {
     // Step 1
     glClear(GL_COLOR_BUFFER_BIT);
 
-    g_current_scene->render(&g_program, logme);
+    g_current_scene->render(&g_program, &text_program, logme);
 
    
     /*
@@ -246,14 +280,6 @@ void render() {
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glDisableVertexAttribArray(g_program.get_position_attribute());
     */
-
-    // 
-    // 
-    // 
-    // 
-    // 
-    // 
-    //effects->render();
 
    /* glm::vec3 position;
     position = { 0.0, 0.0, 0.0 };

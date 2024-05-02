@@ -4,18 +4,24 @@
 #include <random>
 
 
-struct FruitStats {
-    std::vector<std::vector<float>> color = { {1.0f, 0.0f, 0.0f, 1.0f},
+struct FruitStats { 
+    //status about fruits but also stats on the user 
+    std::vector<std::vector<float>> COLOR = { {1.0f, 0.0f, 0.0f, 1.0f},
         {1.0f, 0.5f, 0.0f, 1.0f },
         {1.0f, 1.0f, 0.0f, 1.0f},
         {0.0f, 1.0f, 0.0f, 1.0f},
         {0.0f, 0.0f, 1.0f, 1.0f},
         {0.29f, 0.0f, 0.51f, 1.0f} };
 
-    std::vector<float> radius = { 1, 1.4, 1.65, 1.8, 1.9, 2 };
+    std::vector<float> RADIUS = { 0.1f, 0.4f, 0.65f, 0.8f, 0.9f, 0.95f };
 
-    std::vector<EntityType> type = { F1, F2, F3, F4, F5, F6 };
+    int nextfruit = 0;
+};
 
+struct Goals {
+    std::vector<int> have; 
+    std::vector<bool> forbid; 
+    int clicks;
 };
 
 class Level1 : public Scene {
@@ -25,7 +31,7 @@ public:
     std::mt19937 gen;
 
     FruitStats fruit_stats;
-    
+    Goals goals;
 
     // ————— CONSTRUCTOR ————— //
     ~Level1();
@@ -34,8 +40,16 @@ public:
     void initialise() override;
     void update(float delta_time, std::ofstream& log) override;
 
-    void render(ShaderProgram* program, std::ofstream&) override;
-    void spawn(int x, int y);
+    void render_next_fruit(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log);
+    void render_goals(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log);
+
+    void render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream&) override;
+    void spawn(float x, float y, int fruitindex) override;
+
+    void clean_death();
+    void spawn_new_fruits(std::vector<Info>& info);
+
+    bool check_win();
 
     void reset() override;
 };

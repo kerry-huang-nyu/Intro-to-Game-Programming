@@ -87,7 +87,7 @@ void LoadScreen::update(float delta_time, std::ofstream&)
     //m_state.player->update(delta_time, m_state.player, m_state.enemies, m_state.map);
 }
 
-void LoadScreen::render(ShaderProgram* program, std::ofstream& )
+void LoadScreen::render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& )
 {
     //m_state.player->render(program);
 

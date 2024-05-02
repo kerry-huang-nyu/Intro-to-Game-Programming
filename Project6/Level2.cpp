@@ -1,5 +1,5 @@
-// Level1.cpp
-#include "Level1.h"
+// Level2.cpp
+#include "Level2.h"
 #include "Utility.h"
 
 #include "Physics.h"
@@ -23,7 +23,7 @@ ALL_SFX_CHN = -1;
 const int    LOOP_FOREVER = -1;  // -1 means loop forever in Mix_PlayMusic; 0 means play once and loop zero times
 
 
-Level1::~Level1()
+Level2::~Level2()
 {
 
     Mix_FreeChunk(m_state.eat_fx);
@@ -34,9 +34,9 @@ Level1::~Level1()
     }
 }
 
-void Level1::initialise()
+void Level2::initialise()
 {
-   
+
     m_state.font_texture_id = Utility::load_texture("font1.png"); //then load font as well 
 
     m_state.engine = Physics();
@@ -44,9 +44,9 @@ void Level1::initialise()
     m_state.engine.set_constraint(2.5f); //set my constraint to be a 4 radius circle 
 
 
-    //We need the goals 
-    goals.have = { 0, 0, 0, 0, 0, 1 };
-    goals.forbid = { false, false, false, false, false, false };
+    //We need the Goals2 
+    Goals2.have = { 0, 0, 0, 0, 0, 1 };
+    Goals2.forbid = { false, false, false, false, false, false };
 
 
     /**
@@ -78,16 +78,16 @@ void Level1::initialise()
     );
 }
 
-void Level1::reset() 
+void Level2::reset()
 {
     m_state.endgame = false;
-   /* m_state.player->set_status(ALIVE);
-    m_state.player->set_position(glm::vec3(0));
-    m_state.player->m_movement = glm::vec3(0);*/
-    
+    /* m_state.player->set_status(ALIVE);
+     m_state.player->set_position(glm::vec3(0));
+     m_state.player->m_movement = glm::vec3(0);*/
+
 }
 
-void Level1::spawn(float x, float y, int fruitindex) 
+void Level2::spawn(float x, float y, int fruitindex)
 {
     int randomNumber = fruitindex;
 
@@ -111,7 +111,7 @@ void Level1::spawn(float x, float y, int fruitindex)
     fruit->m_prev_position = glm::vec3(x, y, 0.0f);
 }
 
-void Level1::clean_death() {
+void Level2::clean_death() {
     int start = -1; //start is the first hole 
 
     for (int i = 0; i < m_state.fruits.size(); i++) {
@@ -130,21 +130,17 @@ void Level1::clean_death() {
     if (start >= 0) {
         m_state.fruits.resize(start); //in the end you have start number of fruits left 
     }
-    
+
 }
 
-void Level1::spawn_new_fruits(std::vector<Info>& info) {
+void Level2::spawn_new_fruits(std::vector<Info>& info) {
     for (Info& fruit : info) {
         spawn(fruit.x, fruit.y, fruit.index);
     }
 }
 
-bool Level1::check_win() 
+void Level2::check_win()
 {
-    if (m_state.endgame == true) {
-        return true; //stop checking at this pt 
-    }
-
     m_state.endgame = true;
     std::vector<int> count = { 0,0,0,0,0,0 };
 
@@ -154,24 +150,19 @@ bool Level1::check_win()
     }
 
     for (int i = 0; i < 6; i++) {
-        if (goals.have[i] > count[i]) {
+        if (Goals2.have[i] > count[i]) {
             m_state.endgame = false;
             break;
         }
-        if ((goals.forbid[i] == true) && (count[i] > 0)) {
+        if ((Goals2.forbid[i] == true) && (count[i] > 0)) {
             m_state.endgame = false;
             break;
         }
     }
-    return m_state.endgame;
 }
 
-void Level1::update(float delta_time, std::ofstream& log)
+void Level2::update(float delta_time, std::ofstream& log)
 {
-    if (check_win() == true) {
-        return;
-    }
-
     m_state.engine.apply_gravity(m_state.fruits);
     std::vector<Info> info = m_state.engine.check_collisions(m_state.fruits);
 
@@ -187,7 +178,7 @@ void Level1::update(float delta_time, std::ofstream& log)
     }
 }
 
-void Level1::render_next_fruit(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
+void Level2::render_next_fruit(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
 {
     //render the next fruit 
     glUseProgram(text_program->get_program_id());
@@ -208,7 +199,7 @@ void Level1::render_next_fruit(ShaderProgram* program, ShaderProgram* text_progr
 
 }
 
-void Level1::render_goals(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log) {
+void Level2::render_Goals2(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log) {
 
     glm::vec3 position = { -4.8, 3.0, 0.0 };
     glm::vec3 increment = { 0.0, -1.0, 0.0 };
@@ -219,17 +210,17 @@ void Level1::render_goals(ShaderProgram* program, ShaderProgram* text_program, s
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::vector<std::string> names = { "Red", "Orange", "Yellow", "Green", "Blue", "Purple"};
+    std::vector<std::string> names = { "Red", "Orange", "Yellow", "Green", "Blue", "Purple" };
 
     std::string message = "";
 
     for (int i = 0; i < 6; i++) {
 
-        if (goals.forbid[i] == true) { //if they have no criterias 
+        if (Goals2.forbid[i] == true) { //if they have no criterias 
             message = names[i] + " = 0";
         }
-        else if (goals.have[i] != 0) {
-            message = names[i] + " >= " + std::to_string(goals.have[i]);
+        else if (Goals2.have[i] != 0) {
+            message = names[i] + " >= " + std::to_string(Goals2.have[i]);
         }
         else {
             message = names[i] + " no limit";
@@ -244,7 +235,7 @@ void Level1::render_goals(ShaderProgram* program, ShaderProgram* text_program, s
     glUseProgram(program->get_program_id());
 }
 
-void Level1::render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
+void Level2::render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream& log)
 {
     program->set_colour(1.0f, 1.0f, 1.0f, 1.0f);
     Utility::render(program, m_state.engine.constraint.m_model_matrix, m_state.engine.constraint.m_radius, 64, log);
@@ -254,12 +245,12 @@ void Level1::render(ShaderProgram* program, ShaderProgram* text_program, std::of
         //Utility::draw_text(program, m_state.font_texture_id, "Have I been here before?", 0.5, 0, position);
         //log << "radius : " << m_state.fruits[i]->m_radius << "\n";
         std::vector<float> temp = m_state.fruits[i]->color;
-        
+
         program->set_colour(temp[0], temp[1], temp[2], 1.0f);
         Utility::render(program, m_state.fruits[i]->m_model_matrix, m_state.fruits[i]->m_radius, 64, log);
     }
 
     render_next_fruit(program, text_program, log);
-    render_goals(program, text_program, log);
+    render_Goals2(program, text_program, log);
 
 }

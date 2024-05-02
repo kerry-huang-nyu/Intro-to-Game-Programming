@@ -28,6 +28,14 @@ public:
 };
 
 
+struct Info 
+{
+public:
+    float x;
+    float y;
+
+    int index;
+};
 
 class Physics
 {
@@ -50,9 +58,11 @@ public:
          
     void apply_gravity(std::vector<Entity*>& entities);
 
-    void apply_constraint(std::vector<Entity*>& entities);
+    void apply_constraint(std::vector<Entity*>& entities, float dt);
 
-    void check_collisions(std::vector<Entity*>& entities);
+    void bounded_velocity(Entity* entity, float dt);
+
+    std::vector<Info> check_collisions(std::vector<Entity*>& entities);
 
 
 

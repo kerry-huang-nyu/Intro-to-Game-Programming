@@ -14,7 +14,6 @@
 
 #include <ostream>
 
-enum EntityType { F1, F2, F3, F4, F5, F6 };
 enum Status {ALIVE, DEAD};
 
 class Entity
@@ -28,9 +27,9 @@ public:
     std::vector<float> color;
 
     // ————— STATIC VARIABLES ————— //
-    EntityType m_entity_type;
     Status m_status;
     float m_radius;
+    int m_index;
 
 
     // ————— TRANSFORMATIONS ————— //
@@ -60,7 +59,7 @@ public:
     //void const set_position(glm::vec3 new_position) { m_prev_position = m_curr_position; m_curr_position = new_position; };
 
     // Getters
-    EntityType const get_entity_type()    const { return m_entity_type; };
+    int const get_index()    const { return m_index; };
     
     double       const get_status()       const { return m_status; };
 
@@ -69,7 +68,6 @@ public:
     
    
     // Setters
-    void const set_entity_type(EntityType new_entity_type) { m_entity_type = new_entity_type; };
     void const set_status(Status new_status) { m_status = new_status;  };
     //void const set_direction(int new_direction);
 };

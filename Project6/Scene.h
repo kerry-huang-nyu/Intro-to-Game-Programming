@@ -54,10 +54,10 @@ public:
     // ————— METHODS ————— //
     virtual void initialise() = 0;
     virtual void update(float delta_time, std::ofstream& ) = 0;
-    virtual void render(ShaderProgram* program, std::ofstream&) = 0;
+    virtual void render(ShaderProgram* program, ShaderProgram* text_program, std::ofstream&) = 0;
     virtual void reset() = 0;
 
-    void spawn(int x, int y) { };
+    virtual void spawn(float x, float y, int fruitindex) { };
 
     // ————— GETTERS ————— //
     GameState const get_state()             const { return m_state; }

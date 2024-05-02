@@ -13,7 +13,7 @@ public:
     // ————— METHODS ————— //
     void initialise() override;
     void update(float delta_time, std::ofstream&) override;
-    void render(ShaderProgram* program, std::ofstream&) override;
+    void render(ShaderProgram* program, ShaderProgram* text_program,std::ofstream&) override;
 
     void reset() override;
 };

@@ -182,7 +182,7 @@ void update() {
     
     if (g_current_scene->m_state.endgame == true) {
         
-        if (curr_scene < scenes.size()) {
+        if (curr_scene < scenes.size() - 1) {
             curr_scene++;
             switch_to_scene(scenes[curr_scene]);
         }
